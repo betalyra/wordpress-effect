@@ -1,6 +1,5 @@
-import { Config, Context, Data, Effect, Layer, Redacted } from "effect";
+import { Config, Context, Effect, Layer, Redacted } from "effect";
 import { HttpClient, HttpClientError } from "@effect/platform";
-import { z } from "zod";
 import { encode } from "js-base64";
 import {
   LoadCategoriesProps,
@@ -11,20 +10,16 @@ import {
   LoadPostDetailProps,
   WpPostOverview,
   WpPostDetail,
-  WpPageOverview,
   WpPageDetail,
   WpCategory,
   WpTag,
-  WpStatus,
   WordpressError,
   PostsOverviewResult,
   WPPostOverview,
   WPPostDetail,
-  WPPageOverview,
   WPPageDetail,
   WPCategory,
   WPTag,
-  WPStatus,
 } from "./types";
 
 export type ApiError = HttpClientError.HttpClientError | WordpressError;
@@ -193,17 +188,37 @@ export const WordpressServiceLayer = Layer.effect(
       status,
       page = 1,
       per_page = 9,
+      tags,
+      categories,
     }) =>
       Effect.gen(function* () {
         const postStatus = status || WORDPRESS_STATUS;
-        const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/posts?page=${page}&per_page=${per_page}&status=${postStatus}&_embed=true`,
-          {
-            headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
-            },
-          }
-        );
+
+        const searchParams = new URLSearchParams();
+        searchParams.set("page", page.toString());
+        searchParams.set("per_page", per_page.toString());
+        searchParams.set("status", postStatus);
+        searchParams.set("_embed", "true");
+
+        if (tags) {
+          searchParams.set("tags", tags.join(","));
+        }
+
+        if (categories) {
+          searchParams.set("categories", categories.join(","));
+        }
+
+        const url = new URL(`${WORDPRESS_API_URL}/wp-json/wp/v2/posts`);
+
+        if (searchParams.size > 0) {
+          url.search = searchParams.toString();
+        }
+
+        const response = yield* httpClient.get(url, {
+          headers: {
+            Authorization: `Basic ${WORDPRESS_API_KEY}`,
+          },
+        });
 
         const headers = response.headers;
 
@@ -231,17 +246,32 @@ export const WordpressServiceLayer = Layer.effect(
     const loadPostDetail: IWordpressService["loadPostDetail"] = ({
       status,
       slug,
+      tags,
+      categories,
     }) =>
       Effect.gen(function* () {
         const postStatus = status || WORDPRESS_STATUS;
-        const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/posts?slug=${slug}&status=${postStatus}&_embed=true`,
-          {
-            headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
-            },
-          }
+        const searchParams = new URLSearchParams();
+        searchParams.set("slug", slug);
+        searchParams.set("status", postStatus);
+        searchParams.set("_embed", "true");
+
+        if (tags) {
+          searchParams.set("tags", tags.join(","));
+        }
+
+        if (categories) {
+          searchParams.set("categories", categories.join(","));
+        }
+
+        const url = new URL(
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/posts?${searchParams.toString()}`
         );
+        const response = yield* httpClient.get(url, {
+          headers: {
+            Authorization: `Basic ${WORDPRESS_API_KEY}`,
+          },
+        });
         const json = yield* response.json;
         const posts = WpPostDetail.array().safeParse(json);
         if (!posts.success) {
