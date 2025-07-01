@@ -1,7 +1,5 @@
-import { Config, Context, Data, Effect, Layer, Redacted } from "effect";
-import { HttpClient, HttpClientError } from "@effect/platform";
+import { Data } from "effect";
 import { z } from "zod";
-import { encode } from "js-base64";
 
 export const WpPostOverview = z.object({
   id: z.number(),
