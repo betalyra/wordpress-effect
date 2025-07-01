@@ -37,4 +37,5 @@ jobs:
 
       - run: pnpm dlx pkg-pr-new publish
         env:
+          # Needed for .npmrc
           NPM_TOKEN: "some-token"
