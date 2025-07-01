@@ -1,5 +1,7 @@
 # wordpress-effect
 
+[![pkg.pr.new](https://pkg.pr.new/badge/betalyra/wordpress-effect)](https://pkg.pr.new/~/betalyra/wordpress-effect)
+
 A platform-independent wrapper for wordpress api using [`effect`](https://effect.website).
 
  ## Installation
