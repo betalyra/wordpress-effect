@@ -35,5 +35,6 @@
     "vitest": "^3.2.4",
     "zod": "^3.25.67"
   },
-  "repository": "https://github.com/betalyra/wordpress-effect.git"
+  "repository": "https://github.com/betalyra/wordpress-effect.git",
+  "packageManager": "pnpm@10.9.0"
 }
