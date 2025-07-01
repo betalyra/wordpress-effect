@@ -1,12 +1,10 @@
-name: Publish Approved Pull Requests
-on:
-  pull_request_review:
-    types: [submitted]
+name: Publish Any Commit
+on: [push, pull_request]
 
 jobs:
   check:
     # First, trigger a permissions check on the user approving the pull request.
-    if: github.event.review.state == 'approved'
+    # if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     outputs:
       has-permissions: ${{ steps.checkPermissions.outputs.require-result }}
