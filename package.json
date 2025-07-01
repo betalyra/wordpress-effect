@@ -20,11 +20,11 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@effect/platform": "^0.87.1",
     "@standard-schema/spec": "^1.0.0",
     "js-base64": "^3.7.7"
   },
   "peerDependencies": {
+    "@effect/platform": "^0.87.1",
     "effect": "^3.16.10"
   },
   "devDependencies": {
