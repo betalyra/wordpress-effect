@@ -13,13 +13,15 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "verbatimModuleSyntax": false,
-        "outDir": "dist"
+        "outDir": "dist",
+        "rootDir": "src"
     },
     "exclude": [
         "**/*.spec.ts",
         "**/*.test.ts",
         "**/__tests__/**",
         "node_modules",
+        "coverage",
         "dist"
     ]
 }
