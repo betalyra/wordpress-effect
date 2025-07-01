@@ -20,7 +20,7 @@ import {
   WPPageDetail,
   WPCategory,
   WPTag,
-} from "./types";
+} from "./types.js";
 
 export type ApiError = HttpClientError.HttpClientError | WordpressError;
 
