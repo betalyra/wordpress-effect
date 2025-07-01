@@ -1,6 +1,9 @@
 name: Publish Any Commit
 on: [push, pull_request]
 
+env:
+  NPM_TOKEN: "some-token"
+
 jobs:
   check:
     # First, trigger a permissions check on the user approving the pull request.
@@ -41,7 +44,5 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - run: pnpm dlx pkg-pr-new publish
-        env:
-          # Needed for .npmrc
-          NPM_TOKEN: "some-token"
+      - name: Publish
+        run: pnpm dlx pkg-pr-new publish
