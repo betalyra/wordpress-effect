@@ -179,15 +179,15 @@ export type LoadPostsOverviewProps = {
   status?: WPStatus;
   page?: number;
   per_page?: number;
-  tags?: string[];
-  categories?: string[];
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type LoadPostDetailProps = {
   status?: WPStatus;
   slug: string;
-  tags?: string[];
-  categories?: string[];
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type PaginationInfo = {
