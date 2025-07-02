@@ -20,6 +20,7 @@ import {
   WPPageDetail,
   WPCategory,
   WPTag,
+  LoadLlmsTxtResult,
 } from "./types.js";
 
 export type ApiError = HttpClientError.HttpClientError | WordpressError;
@@ -41,6 +42,7 @@ export type IWordpressService = {
   loadPostDetail: (
     props: LoadPostDetailProps
   ) => Effect.Effect<WPPostDetail[], ApiError>;
+  loadLlmsTxt: Effect.Effect<LoadLlmsTxtResult, ApiError>;
 };
 
 export class WordpressService extends Context.Tag("WordpressService")<
@@ -296,6 +298,21 @@ export const WordpressServiceLayer = Layer.effect(
         return posts.data;
       });
 
+    const loadLlmsTxt: IWordpressService["loadLlmsTxt"] = Effect.gen(
+      function* () {
+        const response = yield* httpClient.get(
+          `${WORDPRESS_API_URL}/llms.txt`,
+          {
+            headers: {
+              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+            },
+          }
+        );
+        const llmsTxt = yield* response.text;
+        return { llmsTxt };
+      }
+    );
+
     return {
       loadCategories,
       loadTags,
@@ -303,6 +320,7 @@ export const WordpressServiceLayer = Layer.effect(
       loadPageDetail,
       loadPostsOverview,
       loadPostDetail,
+      loadLlmsTxt,
     };
   })
 );

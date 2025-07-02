@@ -206,3 +206,7 @@ export type PostsOverviewResult = {
 export class WordpressError extends Data.TaggedError("WordpressError")<{
   message: string;
 }> {}
+
+export type LoadLlmsTxtResult = {
+  llmsTxt: string;
+};
