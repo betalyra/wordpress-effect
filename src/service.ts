@@ -116,21 +116,23 @@ export const WordpressServiceLayer = Layer.effect(
       });
 
     const loadPagesOverview: IWordpressService["loadPagesOverview"] = ({
-      category,
+      categoryIds,
       status,
     }) =>
       Effect.gen(function* () {
         const pageStatus = status || WORDPRESS_STATUS;
-        const categories = yield* loadCategories({ category });
 
-        const retrievedCategory = categories.at(0);
-        if (!retrievedCategory) {
-          return [];
+        const searchParams = new URLSearchParams();
+        searchParams.set("per_page", "10");
+        searchParams.set("status", pageStatus);
+        searchParams.set("_embed", "true");
+
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
 
-        // Fetch all child pages
         const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?per_page=10&categories=${retrievedCategory.id}&fields=id,title,content,date,slug&status=${pageStatus}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
           {
             headers: {
               Authorization: `Basic ${WORDPRESS_API_KEY}`,
@@ -154,21 +156,25 @@ export const WordpressServiceLayer = Layer.effect(
       });
 
     const loadPageDetail: IWordpressService["loadPageDetail"] = ({
-      category,
+      categoryIds,
       slug,
       status,
     }) =>
       Effect.gen(function* () {
         const pageStatus = status || WORDPRESS_STATUS;
         yield* Effect.logDebug(`Fetching page detail for ${slug}`);
-        const categories = yield* loadCategories({ category });
-        if (categories.length === 0) {
-          return [];
+
+        const searchParams = new URLSearchParams();
+        searchParams.set("slug", slug);
+        searchParams.set("status", pageStatus);
+        searchParams.set("_embed", "true");
+
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
-        const retrievedCategory = categories[0];
 
         const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?slug=${slug}&fields=id,title,content,date,slug&status=${pageStatus}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
           {
             headers: {
               Authorization: `Basic ${WORDPRESS_API_KEY}`,
