@@ -80,6 +80,7 @@ export const WordpressServiceLayer = Layer.effect(
         const categories = WpCategory.array().safeParse(categoriesJson);
 
         if (!categories.success) {
+          yield* Effect.logError(categories.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch categories",
@@ -104,6 +105,7 @@ export const WordpressServiceLayer = Layer.effect(
         yield* Effect.logDebug(tagsJson);
         const tags = WpTag.array().safeParse(tagsJson);
         if (!tags.success) {
+          yield* Effect.logError(tags.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch tags",
@@ -140,6 +142,7 @@ export const WordpressServiceLayer = Layer.effect(
         yield* Effect.logDebug(json);
         const pages = WpPostOverview.array().safeParse(json);
         if (!pages.success) {
+          yield* Effect.logError(pages.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch pages",
@@ -175,6 +178,7 @@ export const WordpressServiceLayer = Layer.effect(
         const json = yield* response.json;
         const pages = WpPageDetail.array().safeParse(json);
         if (!pages.success) {
+          yield* Effect.logError(pages.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch page detail",
@@ -188,8 +192,8 @@ export const WordpressServiceLayer = Layer.effect(
       status,
       page = 1,
       per_page = 9,
-      tags,
-      categories,
+      tagIds,
+      categoryIds,
     }) =>
       Effect.gen(function* () {
         const postStatus = status || WORDPRESS_STATUS;
@@ -200,12 +204,12 @@ export const WordpressServiceLayer = Layer.effect(
         searchParams.set("status", postStatus);
         searchParams.set("_embed", "true");
 
-        if (tags) {
-          searchParams.set("tags", tags.join(","));
+        if (tagIds) {
+          searchParams.set("tags", tagIds.join(","));
         }
 
-        if (categories) {
-          searchParams.set("categories", categories.join(","));
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
 
         const url = new URL(`${WORDPRESS_API_URL}/wp-json/wp/v2/posts`);
@@ -230,6 +234,7 @@ export const WordpressServiceLayer = Layer.effect(
         yield* Effect.logDebug(json);
         const posts = WpPostOverview.array().safeParse(json);
         if (!posts.success) {
+          yield* Effect.logError(posts.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch posts",
@@ -246,8 +251,8 @@ export const WordpressServiceLayer = Layer.effect(
     const loadPostDetail: IWordpressService["loadPostDetail"] = ({
       status,
       slug,
-      tags,
-      categories,
+      tagIds,
+      categoryIds,
     }) =>
       Effect.gen(function* () {
         const postStatus = status || WORDPRESS_STATUS;
@@ -256,12 +261,12 @@ export const WordpressServiceLayer = Layer.effect(
         searchParams.set("status", postStatus);
         searchParams.set("_embed", "true");
 
-        if (tags) {
-          searchParams.set("tags", tags.join(","));
+        if (tagIds) {
+          searchParams.set("tags", tagIds.join(","));
         }
 
-        if (categories) {
-          searchParams.set("categories", categories.join(","));
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
 
         const url = new URL(
@@ -275,6 +280,7 @@ export const WordpressServiceLayer = Layer.effect(
         const json = yield* response.json;
         const posts = WpPostDetail.array().safeParse(json);
         if (!posts.success) {
+          yield* Effect.logError(posts.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch post detail",
