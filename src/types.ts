@@ -165,14 +165,16 @@ export type LoadTagsProps = {
 };
 
 export type LoadPagesProps = {
-  category: string;
   status?: WPStatus;
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type LoadPageDetailProps = {
-  category: string;
   slug: string;
   status?: WPStatus;
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type LoadPostsOverviewProps = {
