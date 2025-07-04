@@ -20,6 +20,7 @@ import {
   WPPageDetail,
   WPCategory,
   WPTag,
+  LoadLlmsTxtResult,
 } from "./types.js";
 
 export type ApiError = HttpClientError.HttpClientError | WordpressError;
@@ -41,6 +42,7 @@ export type IWordpressService = {
   loadPostDetail: (
     props: LoadPostDetailProps
   ) => Effect.Effect<WPPostDetail[], ApiError>;
+  loadLlmsTxt: Effect.Effect<LoadLlmsTxtResult, ApiError>;
 };
 
 export class WordpressService extends Context.Tag("WordpressService")<
@@ -51,13 +53,24 @@ export class WordpressService extends Context.Tag("WordpressService")<
 export const WordpressServiceLayer = Layer.effect(
   WordpressService,
   Effect.gen(function* () {
-    const WORDPRESS_API_URL = yield* Config.string("WORDPRESS_API_URL");
+    const WORDPRESS_API_URL = yield* Config.url("WORDPRESS_API_URL");
     const WORDPRESS_USERNAME = yield* Config.string("WORDPRESS_USERNAME");
     const WORDPRESS_PASSWORD = yield* Config.redacted("WORDPRESS_PASSWORD");
     const WORDPRESS_STATUS = yield* Config.string("WORDPRESS_STATUS");
 
+    if (
+      WORDPRESS_USERNAME.valueOf() === "" ||
+      Redacted.value(WORDPRESS_PASSWORD) === ""
+    ) {
+      return yield* Effect.fail(
+        new WordpressError({
+          message: "WORDPRESS_USERNAME or WORDPRESS_PASSWORD is not set",
+        })
+      );
+    }
+
     const WORDPRESS_API_KEY = Redacted.make(
-      encode(`${WORDPRESS_USERNAME}:${WORDPRESS_PASSWORD}`)
+      encode(`${WORDPRESS_USERNAME}:${Redacted.value(WORDPRESS_PASSWORD)}`)
     );
 
     const httpClient = yield* HttpClient.HttpClient;
@@ -71,7 +84,7 @@ export const WordpressServiceLayer = Layer.effect(
           `${WORDPRESS_API_URL}/wp-json/wp/v2/categories?slug=${category}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
@@ -80,6 +93,7 @@ export const WordpressServiceLayer = Layer.effect(
         const categories = WpCategory.array().safeParse(categoriesJson);
 
         if (!categories.success) {
+          yield* Effect.logError(categories.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch categories",
@@ -96,7 +110,7 @@ export const WordpressServiceLayer = Layer.effect(
           `${WORDPRESS_API_URL}/wp-json/wp/v2/tags?slug=${tag}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
@@ -104,6 +118,7 @@ export const WordpressServiceLayer = Layer.effect(
         yield* Effect.logDebug(tagsJson);
         const tags = WpTag.array().safeParse(tagsJson);
         if (!tags.success) {
+          yield* Effect.logError(tags.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch tags",
@@ -114,24 +129,26 @@ export const WordpressServiceLayer = Layer.effect(
       });
 
     const loadPagesOverview: IWordpressService["loadPagesOverview"] = ({
-      category,
+      categoryIds,
       status,
     }) =>
       Effect.gen(function* () {
         const pageStatus = status || WORDPRESS_STATUS;
-        const categories = yield* loadCategories({ category });
 
-        const retrievedCategory = categories.at(0);
-        if (!retrievedCategory) {
-          return [];
+        const searchParams = new URLSearchParams();
+        searchParams.set("per_page", "10");
+        searchParams.set("status", pageStatus);
+        searchParams.set("_embed", "true");
+
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
 
-        // Fetch all child pages
         const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?per_page=10&categories=${retrievedCategory.id}&fields=id,title,content,date,slug&status=${pageStatus}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
@@ -140,6 +157,7 @@ export const WordpressServiceLayer = Layer.effect(
         yield* Effect.logDebug(json);
         const pages = WpPostOverview.array().safeParse(json);
         if (!pages.success) {
+          yield* Effect.logError(pages.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch pages",
@@ -151,30 +169,35 @@ export const WordpressServiceLayer = Layer.effect(
       });
 
     const loadPageDetail: IWordpressService["loadPageDetail"] = ({
-      category,
+      categoryIds,
       slug,
       status,
     }) =>
       Effect.gen(function* () {
         const pageStatus = status || WORDPRESS_STATUS;
         yield* Effect.logDebug(`Fetching page detail for ${slug}`);
-        const categories = yield* loadCategories({ category });
-        if (categories.length === 0) {
-          return [];
+
+        const searchParams = new URLSearchParams();
+        searchParams.set("slug", slug);
+        searchParams.set("status", pageStatus);
+        searchParams.set("_embed", "true");
+
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
-        const retrievedCategory = categories[0];
 
         const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?slug=${slug}&fields=id,title,content,date,slug&status=${pageStatus}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
         const json = yield* response.json;
         const pages = WpPageDetail.array().safeParse(json);
         if (!pages.success) {
+          yield* Effect.logError(pages.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch page detail",
@@ -188,8 +211,8 @@ export const WordpressServiceLayer = Layer.effect(
       status,
       page = 1,
       per_page = 9,
-      tags,
-      categories,
+      tagIds,
+      categoryIds,
     }) =>
       Effect.gen(function* () {
         const postStatus = status || WORDPRESS_STATUS;
@@ -200,12 +223,12 @@ export const WordpressServiceLayer = Layer.effect(
         searchParams.set("status", postStatus);
         searchParams.set("_embed", "true");
 
-        if (tags) {
-          searchParams.set("tags", tags.join(","));
+        if (tagIds) {
+          searchParams.set("tags", tagIds.join(","));
         }
 
-        if (categories) {
-          searchParams.set("categories", categories.join(","));
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
 
         const url = new URL(`${WORDPRESS_API_URL}/wp-json/wp/v2/posts`);
@@ -214,9 +237,12 @@ export const WordpressServiceLayer = Layer.effect(
           url.search = searchParams.toString();
         }
 
+        yield* Effect.logDebug("Requesting posts overview", {
+          url: url.toString(),
+        });
         const response = yield* httpClient.get(url, {
           headers: {
-            Authorization: `Basic ${WORDPRESS_API_KEY}`,
+            Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
           },
         });
 
@@ -226,10 +252,22 @@ export const WordpressServiceLayer = Layer.effect(
         const totalPages = parseInt(headers["X-WP-TotalPages"] ?? "1", 10);
         const totalPosts = parseInt(headers["X-WP-Total"] ?? "0", 10);
 
+        if (response.status !== 200) {
+          yield* Effect.logError("Failed to fetch posts", {
+            status: response.status,
+          });
+          const error = yield* response.text;
+          yield* Effect.logError(error);
+          return yield* Effect.fail(
+            new WordpressError({ message: "Failed to fetch posts" })
+          );
+        }
+
         const json = yield* response.json;
         yield* Effect.logDebug(json);
         const posts = WpPostOverview.array().safeParse(json);
         if (!posts.success) {
+          yield* Effect.logError(posts.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch posts",
@@ -246,8 +284,8 @@ export const WordpressServiceLayer = Layer.effect(
     const loadPostDetail: IWordpressService["loadPostDetail"] = ({
       status,
       slug,
-      tags,
-      categories,
+      tagIds,
+      categoryIds,
     }) =>
       Effect.gen(function* () {
         const postStatus = status || WORDPRESS_STATUS;
@@ -256,12 +294,12 @@ export const WordpressServiceLayer = Layer.effect(
         searchParams.set("status", postStatus);
         searchParams.set("_embed", "true");
 
-        if (tags) {
-          searchParams.set("tags", tags.join(","));
+        if (tagIds) {
+          searchParams.set("tags", tagIds.join(","));
         }
 
-        if (categories) {
-          searchParams.set("categories", categories.join(","));
+        if (categoryIds) {
+          searchParams.set("categories", categoryIds.join(","));
         }
 
         const url = new URL(
@@ -269,12 +307,13 @@ export const WordpressServiceLayer = Layer.effect(
         );
         const response = yield* httpClient.get(url, {
           headers: {
-            Authorization: `Basic ${WORDPRESS_API_KEY}`,
+            Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
           },
         });
         const json = yield* response.json;
         const posts = WpPostDetail.array().safeParse(json);
         if (!posts.success) {
+          yield* Effect.logError(posts.error);
           return yield* Effect.fail(
             new WordpressError({
               message: "Failed to fetch post detail",
@@ -284,6 +323,21 @@ export const WordpressServiceLayer = Layer.effect(
         return posts.data;
       });
 
+    const loadLlmsTxt: IWordpressService["loadLlmsTxt"] = Effect.gen(
+      function* () {
+        const response = yield* httpClient.get(
+          `${WORDPRESS_API_URL}/llms.txt`,
+          {
+            headers: {
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
+            },
+          }
+        );
+        const llmsTxt = yield* response.text;
+        return { llmsTxt };
+      }
+    );
+
     return {
       loadCategories,
       loadTags,
@@ -291,6 +345,7 @@ export const WordpressServiceLayer = Layer.effect(
       loadPageDetail,
       loadPostsOverview,
       loadPostDetail,
+      loadLlmsTxt,
     };
   })
 );

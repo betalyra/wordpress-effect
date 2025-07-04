@@ -165,29 +165,31 @@ export type LoadTagsProps = {
 };
 
 export type LoadPagesProps = {
-  category: string;
   status?: WPStatus;
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type LoadPageDetailProps = {
-  category: string;
   slug: string;
   status?: WPStatus;
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type LoadPostsOverviewProps = {
   status?: WPStatus;
   page?: number;
   per_page?: number;
-  tags?: string[];
-  categories?: string[];
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type LoadPostDetailProps = {
   status?: WPStatus;
   slug: string;
-  tags?: string[];
-  categories?: string[];
+  tagIds?: number[];
+  categoryIds?: number[];
 };
 
 export type PaginationInfo = {
@@ -204,3 +206,7 @@ export type PostsOverviewResult = {
 export class WordpressError extends Data.TaggedError("WordpressError")<{
   message: string;
 }> {}
+
+export type LoadLlmsTxtResult = {
+  llmsTxt: string;
+};
