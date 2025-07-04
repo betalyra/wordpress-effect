@@ -245,6 +245,8 @@ export const WordpressServiceLayer = Layer.effect(
           yield* Effect.logError("Failed to fetch posts", {
             status: response.status,
           });
+          const error = yield* response.text;
+          yield* Effect.logError(error);
           return yield* Effect.fail(
             new WordpressError({ message: "Failed to fetch posts" })
           );
