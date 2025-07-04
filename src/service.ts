@@ -53,13 +53,24 @@ export class WordpressService extends Context.Tag("WordpressService")<
 export const WordpressServiceLayer = Layer.effect(
   WordpressService,
   Effect.gen(function* () {
-    const WORDPRESS_API_URL = yield* Config.string("WORDPRESS_API_URL");
+    const WORDPRESS_API_URL = yield* Config.url("WORDPRESS_API_URL");
     const WORDPRESS_USERNAME = yield* Config.string("WORDPRESS_USERNAME");
     const WORDPRESS_PASSWORD = yield* Config.redacted("WORDPRESS_PASSWORD");
     const WORDPRESS_STATUS = yield* Config.string("WORDPRESS_STATUS");
 
+    if (
+      WORDPRESS_USERNAME.valueOf() === "" ||
+      Redacted.value(WORDPRESS_PASSWORD) === ""
+    ) {
+      return yield* Effect.fail(
+        new WordpressError({
+          message: "WORDPRESS_USERNAME or WORDPRESS_PASSWORD is not set",
+        })
+      );
+    }
+
     const WORDPRESS_API_KEY = Redacted.make(
-      encode(`${WORDPRESS_USERNAME}:${WORDPRESS_PASSWORD}`)
+      encode(`${WORDPRESS_USERNAME}:${Redacted.value(WORDPRESS_PASSWORD)}`)
     );
 
     const httpClient = yield* HttpClient.HttpClient;
