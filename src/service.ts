@@ -226,6 +226,9 @@ export const WordpressServiceLayer = Layer.effect(
           url.search = searchParams.toString();
         }
 
+        yield* Effect.logDebug("Requesting posts overview", {
+          url: url.toString(),
+        });
         const response = yield* httpClient.get(url, {
           headers: {
             Authorization: `Basic ${WORDPRESS_API_KEY}`,
@@ -237,6 +240,15 @@ export const WordpressServiceLayer = Layer.effect(
         // Get total pages from headers
         const totalPages = parseInt(headers["X-WP-TotalPages"] ?? "1", 10);
         const totalPosts = parseInt(headers["X-WP-Total"] ?? "0", 10);
+
+        if (response.status !== 200) {
+          yield* Effect.logError("Failed to fetch posts", {
+            status: response.status,
+          });
+          return yield* Effect.fail(
+            new WordpressError({ message: "Failed to fetch posts" })
+          );
+        }
 
         const json = yield* response.json;
         yield* Effect.logDebug(json);
