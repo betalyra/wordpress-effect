@@ -84,7 +84,7 @@ export const WordpressServiceLayer = Layer.effect(
           `${WORDPRESS_API_URL}/wp-json/wp/v2/categories?slug=${category}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
@@ -110,7 +110,7 @@ export const WordpressServiceLayer = Layer.effect(
           `${WORDPRESS_API_URL}/wp-json/wp/v2/tags?slug=${tag}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
@@ -148,7 +148,7 @@ export const WordpressServiceLayer = Layer.effect(
           `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
@@ -190,7 +190,7 @@ export const WordpressServiceLayer = Layer.effect(
           `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
@@ -242,7 +242,7 @@ export const WordpressServiceLayer = Layer.effect(
         });
         const response = yield* httpClient.get(url, {
           headers: {
-            Authorization: `Basic ${WORDPRESS_API_KEY}`,
+            Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
           },
         });
 
@@ -307,7 +307,7 @@ export const WordpressServiceLayer = Layer.effect(
         );
         const response = yield* httpClient.get(url, {
           headers: {
-            Authorization: `Basic ${WORDPRESS_API_KEY}`,
+            Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
           },
         });
         const json = yield* response.json;
@@ -329,7 +329,7 @@ export const WordpressServiceLayer = Layer.effect(
           `${WORDPRESS_API_URL}/llms.txt`,
           {
             headers: {
-              Authorization: `Basic ${WORDPRESS_API_KEY}`,
+              Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
             },
           }
         );
