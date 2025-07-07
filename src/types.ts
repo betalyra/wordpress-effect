@@ -1,6 +1,51 @@
 import { Data } from "effect";
 import { z } from "zod";
 
+// SEO and Meta Data schemas
+export const WpSeoMeta = z.object({
+  // Basic SEO
+  meta_title: z.string().optional(),
+  meta_description: z.string().optional(),
+  canonical_url: z.string().optional(),
+  robots: z.string().optional(), // noindex, nofollow, etc.
+
+  // Open Graph
+  og_title: z.string().optional(),
+  og_description: z.string().optional(),
+  og_image: z.string().optional(),
+  og_image_alt: z.string().optional(),
+  og_url: z.string().optional(),
+  og_type: z.string().optional(),
+  og_site_name: z.string().optional(),
+  og_locale: z.string().optional(),
+
+  // Twitter Cards
+  twitter_card: z.string().optional(),
+  twitter_title: z.string().optional(),
+  twitter_description: z.string().optional(),
+  twitter_image: z.string().optional(),
+  twitter_image_alt: z.string().optional(),
+  twitter_site: z.string().optional(),
+  twitter_creator: z.string().optional(),
+
+  // Schema.org structured data
+  schema_type: z.string().optional(),
+  schema_json: z.string().optional(),
+
+  // Additional SEO fields
+  focus_keyword: z.string().optional(),
+  readability_score: z.number().optional(),
+  seo_score: z.number().optional(),
+  breadcrumbs: z
+    .array(
+      z.object({
+        text: z.string(),
+        url: z.string(),
+      })
+    )
+    .optional(),
+});
+
 export const WpPostOverview = z.object({
   id: z.number(),
   title: z.object({
@@ -13,6 +58,8 @@ export const WpPostOverview = z.object({
   slug: z.string(),
   author: z.number().optional(),
   featured_media: z.number().optional(),
+  // Add SEO meta fields
+  seo_meta: WpSeoMeta.optional(),
   _embedded: z
     .object({
       author: z
@@ -32,6 +79,25 @@ export const WpPostOverview = z.object({
             id: z.number(),
             source_url: z.string(),
             alt_text: z.string().optional(),
+            // Add media meta for better SEO
+            media_details: z
+              .object({
+                width: z.number().optional(),
+                height: z.number().optional(),
+                file: z.string().optional(),
+                sizes: z
+                  .record(
+                    z.string(),
+                    z.object({
+                      file: z.string(),
+                      width: z.number(),
+                      height: z.number(),
+                      source_url: z.string(),
+                    })
+                  )
+                  .optional(),
+              })
+              .optional(),
           })
         )
         .optional(),
@@ -55,6 +121,12 @@ export const WpPostDetail = z.object({
   slug: z.string(),
   author: z.number().optional(),
   featured_media: z.number().optional(),
+  // Add SEO meta fields
+  seo_meta: WpSeoMeta.optional(),
+  // Add estimated reading time
+  reading_time: z.number().optional(),
+  // Add word count
+  word_count: z.number().optional(),
   _embedded: z
     .object({
       author: z
@@ -74,6 +146,25 @@ export const WpPostDetail = z.object({
             id: z.number(),
             source_url: z.string(),
             alt_text: z.string().optional(),
+            // Add media meta for better SEO
+            media_details: z
+              .object({
+                width: z.number().optional(),
+                height: z.number().optional(),
+                file: z.string().optional(),
+                sizes: z
+                  .record(
+                    z.string(),
+                    z.object({
+                      file: z.string(),
+                      width: z.number(),
+                      height: z.number(),
+                      source_url: z.string(),
+                    })
+                  )
+                  .optional(),
+              })
+              .optional(),
           })
         )
         .optional(),
@@ -100,6 +191,8 @@ export const WpPageOverview = z.object({
   categories: z.array(z.number()),
   tags: z.array(z.number()),
   class_list: z.array(z.string()),
+  // Add SEO meta fields
+  seo_meta: WpSeoMeta.optional(),
 });
 
 export const WpPageDetail = WpPageOverview.extend({
@@ -121,6 +214,12 @@ export const WpPageDetail = WpPageOverview.extend({
   meta: z.object({
     footnotes: z.string(),
   }),
+  // Add SEO meta fields
+  seo_meta: WpSeoMeta.optional(),
+  // Add estimated reading time
+  reading_time: z.number().optional(),
+  // Add word count
+  word_count: z.number().optional(),
 });
 
 export const WpCategory = z.object({
@@ -133,6 +232,8 @@ export const WpCategory = z.object({
   taxonomy: z.literal("category"),
   parent: z.number(),
   meta: z.array(z.unknown()),
+  // Add SEO meta fields for taxonomy terms
+  seo_meta: WpSeoMeta.optional(),
 });
 
 export const WpTag = z.object({
@@ -144,8 +245,11 @@ export const WpTag = z.object({
   slug: z.string(),
   taxonomy: z.literal("post_tag"),
   meta: z.array(z.unknown()),
+  // Add SEO meta fields for taxonomy terms
+  seo_meta: WpSeoMeta.optional(),
 });
 
+export type WPSeoMeta = z.infer<typeof WpSeoMeta>;
 export type WPPostOverview = z.infer<typeof WpPostOverview>;
 export type WPPostDetail = z.infer<typeof WpPostDetail>;
 export type WPPageOverview = z.infer<typeof WpPageOverview>;
@@ -209,4 +313,42 @@ export class WordpressError extends Data.TaggedError("WordpressError")<{
 
 export type LoadLlmsTxtResult = {
   llmsTxt: string;
+};
+
+// Additional SEO-related types
+export type SeoAnalysis = {
+  readability: {
+    score: number;
+    status: "good" | "ok" | "bad";
+    issues: string[];
+  };
+  seo: {
+    score: number;
+    status: "good" | "ok" | "bad";
+    issues: string[];
+  };
+  focus_keyword: {
+    keyword: string;
+    density: number;
+    occurrences: number;
+  };
+};
+
+export type SocialMediaPreview = {
+  facebook: {
+    title: string;
+    description: string;
+    image: string;
+  };
+  twitter: {
+    title: string;
+    description: string;
+    image: string;
+    card_type: "summary" | "summary_large_image";
+  };
+  linkedin: {
+    title: string;
+    description: string;
+    image: string;
+  };
 };

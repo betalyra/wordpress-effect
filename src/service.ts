@@ -50,6 +50,26 @@ export class WordpressService extends Context.Tag("WordpressService")<
   IWordpressService
 >() {}
 
+// Helper function to build comprehensive search parameters for SEO data
+const buildSeoSearchParams = (baseParams: URLSearchParams): URLSearchParams => {
+  // Include embedded data for authors and featured media
+  baseParams.set("_embed", "true");
+
+  // Include meta fields for SEO plugins (Yoast, RankMath, etc.)
+  baseParams.set(
+    "meta_key",
+    "_yoast_wpseo_metadesc,_yoast_wpseo_title,_yoast_wpseo_canonical,_yoast_wpseo_meta-robots-noindex,_yoast_wpseo_meta-robots-nofollow,_yoast_wpseo_opengraph-title,_yoast_wpseo_opengraph-description,_yoast_wpseo_opengraph-image,_yoast_wpseo_twitter-title,_yoast_wpseo_twitter-description,_yoast_wpseo_twitter-image,_rank_math_title,_rank_math_description,_rank_math_canonical_url,_rank_math_robots,_rank_math_facebook_title,_rank_math_facebook_description,_rank_math_facebook_image,_rank_math_twitter_title,_rank_math_twitter_description,_rank_math_twitter_image"
+  );
+
+  // Include additional fields that might contain SEO data
+  baseParams.set(
+    "_fields",
+    "id,date,date_gmt,guid,modified,modified_gmt,slug,status,type,link,title,content,excerpt,author,featured_media,comment_status,ping_status,sticky,template,format,meta,categories,tags,class_list,_links,_embedded"
+  );
+
+  return baseParams;
+};
+
 export const WordpressServiceLayer = Layer.effect(
   WordpressService,
   Effect.gen(function* () {
@@ -80,8 +100,17 @@ export const WordpressServiceLayer = Layer.effect(
     }) =>
       Effect.gen(function* () {
         yield* Effect.logDebug(`Fetching categories for ${category}`);
+
+        const searchParams = new URLSearchParams();
+        searchParams.set("slug", category);
+        // Include meta fields for taxonomy SEO
+        searchParams.set(
+          "_fields",
+          "id,count,description,link,name,slug,taxonomy,parent,meta"
+        );
+
         const categoriesResponse = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/categories?slug=${category}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/categories?${searchParams.toString()}`,
           {
             headers: {
               Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
@@ -106,8 +135,17 @@ export const WordpressServiceLayer = Layer.effect(
     const loadTags: IWordpressService["loadTags"] = ({ tag }) =>
       Effect.gen(function* () {
         yield* Effect.logDebug(`Fetching tags for ${tag}`);
+
+        const searchParams = new URLSearchParams();
+        searchParams.set("slug", tag);
+        // Include meta fields for taxonomy SEO
+        searchParams.set(
+          "_fields",
+          "id,count,description,link,name,slug,taxonomy,meta"
+        );
+
         const tagsResponse = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/tags?slug=${tag}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/tags?${searchParams.toString()}`,
           {
             headers: {
               Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
@@ -138,14 +176,16 @@ export const WordpressServiceLayer = Layer.effect(
         const searchParams = new URLSearchParams();
         searchParams.set("per_page", "10");
         searchParams.set("status", pageStatus);
-        searchParams.set("_embed", "true");
 
         if (categoryIds) {
           searchParams.set("categories", categoryIds.join(","));
         }
 
+        // Add comprehensive SEO parameters
+        const seoParams = buildSeoSearchParams(searchParams);
+
         const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${seoParams.toString()}`,
           {
             headers: {
               Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
@@ -180,14 +220,16 @@ export const WordpressServiceLayer = Layer.effect(
         const searchParams = new URLSearchParams();
         searchParams.set("slug", slug);
         searchParams.set("status", pageStatus);
-        searchParams.set("_embed", "true");
 
         if (categoryIds) {
           searchParams.set("categories", categoryIds.join(","));
         }
 
+        // Add comprehensive SEO parameters
+        const seoParams = buildSeoSearchParams(searchParams);
+
         const response = yield* httpClient.get(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${searchParams.toString()}`,
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/pages?${seoParams.toString()}`,
           {
             headers: {
               Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
@@ -221,7 +263,6 @@ export const WordpressServiceLayer = Layer.effect(
         searchParams.set("page", page.toString());
         searchParams.set("per_page", per_page.toString());
         searchParams.set("status", postStatus);
-        searchParams.set("_embed", "true");
 
         if (tagIds) {
           searchParams.set("tags", tagIds.join(","));
@@ -231,11 +272,11 @@ export const WordpressServiceLayer = Layer.effect(
           searchParams.set("categories", categoryIds.join(","));
         }
 
-        const url = new URL(`${WORDPRESS_API_URL}/wp-json/wp/v2/posts`);
+        // Add comprehensive SEO parameters
+        const seoParams = buildSeoSearchParams(searchParams);
 
-        if (searchParams.size > 0) {
-          url.search = searchParams.toString();
-        }
+        const url = new URL(`${WORDPRESS_API_URL}/wp-json/wp/v2/posts`);
+        url.search = seoParams.toString();
 
         yield* Effect.logDebug("Requesting posts overview", {
           url: url.toString(),
@@ -292,7 +333,6 @@ export const WordpressServiceLayer = Layer.effect(
         const searchParams = new URLSearchParams();
         searchParams.set("slug", slug);
         searchParams.set("status", postStatus);
-        searchParams.set("_embed", "true");
 
         if (tagIds) {
           searchParams.set("tags", tagIds.join(","));
@@ -302,8 +342,11 @@ export const WordpressServiceLayer = Layer.effect(
           searchParams.set("categories", categoryIds.join(","));
         }
 
+        // Add comprehensive SEO parameters
+        const seoParams = buildSeoSearchParams(searchParams);
+
         const url = new URL(
-          `${WORDPRESS_API_URL}/wp-json/wp/v2/posts?${searchParams.toString()}`
+          `${WORDPRESS_API_URL}/wp-json/wp/v2/posts?${seoParams.toString()}`
         );
         const response = yield* httpClient.get(url, {
           headers: {
