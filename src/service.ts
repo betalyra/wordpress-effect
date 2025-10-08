@@ -350,6 +350,9 @@ export const WordpressServiceLayer = Layer.effect(
         const url = new URL(
           `${WORDPRESS_API_URL}/wp-json/wp/v2/posts?${seoParams.toString()}`
         );
+        yield* Effect.logDebug("Requesting post detail", {
+          url: url.toString(),
+        });
         const response = yield* httpClient.get(url, {
           headers: {
             Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
