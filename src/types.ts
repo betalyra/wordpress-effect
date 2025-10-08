@@ -46,6 +46,7 @@ export const WpPostDetail = z.object({
   }),
   content: z.object({
     rendered: z.string(),
+    raw: z.string().optional(), // Raw Gutenberg block content
   }),
   excerpt: z.object({
     rendered: z.string(),
@@ -111,6 +112,7 @@ export const WpPageDetail = WpPageOverview.extend({
   modified_gmt: z.string(),
   content: z.object({
     rendered: z.string(),
+    raw: z.string().optional(), // Raw Gutenberg block content
     protected: z.boolean(),
   }),
   author: z.number(),

@@ -255,6 +255,8 @@ export const WordpressServiceLayer = Layer.effect(
         searchParams.set("slug", slug);
         searchParams.set("status", postStatus);
         searchParams.set("_embed", "true");
+        // Request edit context to get raw content (Gutenberg blocks)
+        searchParams.set("context", "edit");
 
         if (tags) {
           searchParams.set("tags", tags.join(","));
