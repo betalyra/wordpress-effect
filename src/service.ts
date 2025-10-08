@@ -333,6 +333,8 @@ export const WordpressServiceLayer = Layer.effect(
         const searchParams = new URLSearchParams();
         searchParams.set("slug", slug);
         searchParams.set("status", postStatus);
+        // Request edit context to get raw content (Gutenberg blocks)
+        searchParams.set("context", "edit");
 
         if (tagIds) {
           searchParams.set("tags", tagIds.join(","));
@@ -353,6 +355,16 @@ export const WordpressServiceLayer = Layer.effect(
             Authorization: `Basic ${Redacted.value(WORDPRESS_API_KEY)}`,
           },
         });
+        if (response.status !== 200) {
+          yield* Effect.logError("Failed to fetch post detail", {
+            status: response.status,
+          });
+          const text = yield* response.text;
+          yield* Effect.logError(text);
+          return yield* Effect.fail(
+            new WordpressError({ message: "Failed to fetch post detail" })
+          );
+        }
         const json = yield* response.json;
         const posts = WpPostDetail.array().safeParse(json);
         if (!posts.success) {
