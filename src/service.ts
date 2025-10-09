@@ -61,10 +61,10 @@ const buildSeoSearchParams = (baseParams: URLSearchParams): URLSearchParams => {
     "_yoast_wpseo_metadesc,_yoast_wpseo_title,_yoast_wpseo_canonical,_yoast_wpseo_meta-robots-noindex,_yoast_wpseo_meta-robots-nofollow,_yoast_wpseo_opengraph-title,_yoast_wpseo_opengraph-description,_yoast_wpseo_opengraph-image,_yoast_wpseo_twitter-title,_yoast_wpseo_twitter-description,_yoast_wpseo_twitter-image,_rank_math_title,_rank_math_description,_rank_math_canonical_url,_rank_math_robots,_rank_math_facebook_title,_rank_math_facebook_description,_rank_math_facebook_image,_rank_math_twitter_title,_rank_math_twitter_description,_rank_math_twitter_image"
   );
 
-  // Include additional fields that might contain SEO data
+  // // Include additional fields that might contain SEO data
   baseParams.set(
     "_fields",
-    "id,date,date_gmt,guid,modified,modified_gmt,slug,status,type,link,title,content,excerpt,author,featured_media,comment_status,ping_status,sticky,template,format,meta,categories,tags,class_list,_links,_embedded"
+    "id,content.rendered,content.raw,block_data,has_blocks,date,date_gmt,guid,modified,modified_gmt,slug,status,type,link,title,excerpt,author,featured_media,comment_status,ping_status,sticky,template,format,meta,categories,tags,class_list,_links,_embedded"
   );
 
   return baseParams;
@@ -73,7 +73,9 @@ const buildSeoSearchParams = (baseParams: URLSearchParams): URLSearchParams => {
 export const WordpressServiceLayer = Layer.effect(
   WordpressService,
   Effect.gen(function* () {
-    const WORDPRESS_API_URL = yield* Config.url("WORDPRESS_API_URL");
+    const WORDPRESS_API_URL = yield* Config.url("WORDPRESS_API_URL").pipe(
+      Effect.map((url) => url.toString().replace(/\/$/, ""))
+    );
     const WORDPRESS_USERNAME = yield* Config.string("WORDPRESS_USERNAME");
     const WORDPRESS_PASSWORD = yield* Config.redacted("WORDPRESS_PASSWORD");
     const WORDPRESS_STATUS = yield* Config.string("WORDPRESS_STATUS");
@@ -333,8 +335,6 @@ export const WordpressServiceLayer = Layer.effect(
         const searchParams = new URLSearchParams();
         searchParams.set("slug", slug);
         searchParams.set("status", postStatus);
-        // Request edit context to get raw content (Gutenberg blocks)
-        searchParams.set("context", "edit");
 
         if (tagIds) {
           searchParams.set("tags", tagIds.join(","));
