@@ -111,9 +111,13 @@ export const WpPostDetail = z.object({
     rendered: z.string(),
   }),
   content: z.object({
+    raw: z.string().optional(),
     rendered: z.string(),
   }),
+  block_data: z.array(z.unknown()).optional(),
+  has_blocks: z.boolean().optional(),
   excerpt: z.object({
+    raw: z.string().optional(),
     rendered: z.string(),
   }),
   date: z.string(),
@@ -203,9 +207,12 @@ export const WpPageDetail = WpPageOverview.extend({
   modified: z.string(),
   modified_gmt: z.string(),
   content: z.object({
+    raw: z.string().optional(),
     rendered: z.string(),
     protected: z.boolean(),
   }),
+  has_blocks: z.boolean().optional(),
+  block_data: z.array(z.unknown()).optional(),
   author: z.number(),
   featured_media: z.number(),
   comment_status: z.string(),
