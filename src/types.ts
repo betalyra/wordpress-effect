@@ -256,13 +256,200 @@ export const WpTag = z.object({
   seo_meta: WpSeoMeta.optional(),
 });
 
-export type WPSeoMeta = z.infer<typeof WpSeoMeta>;
-export type WPPostOverview = z.infer<typeof WpPostOverview>;
-export type WPPostDetail = z.infer<typeof WpPostDetail>;
-export type WPPageOverview = z.infer<typeof WpPageOverview>;
-export type WPPageDetail = z.infer<typeof WpPageDetail>;
-export type WPCategory = z.infer<typeof WpCategory>;
-export type WPTag = z.infer<typeof WpTag>;
+export type WPSeoMeta = {
+  meta_title?: string;
+  meta_description?: string;
+  canonical_url?: string;
+  robots?: string;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  og_image_alt?: string;
+  og_url?: string;
+  og_type?: string;
+  og_site_name?: string;
+  og_locale?: string;
+  twitter_card?: string;
+  twitter_title?: string;
+  twitter_description?: string;
+  twitter_image?: string;
+  twitter_image_alt?: string;
+  twitter_site?: string;
+  twitter_creator?: string;
+  schema_type?: string;
+  schema_json?: string;
+  focus_keyword?: string;
+  readability_score?: number;
+  seo_score?: number;
+  breadcrumbs?: Array<{
+    text: string;
+    url: string;
+  }>;
+};
+
+export type WPPostOverview = {
+  id: number;
+  title: {
+    rendered: string;
+  };
+  excerpt: {
+    rendered: string;
+  };
+  date: string;
+  slug: string;
+  author?: number;
+  featured_media?: number;
+  seo_meta?: WPSeoMeta;
+  _embedded?: {
+    author?: Array<{
+      id: number;
+      name: string;
+      url?: string;
+      description?: string;
+      avatar_urls?: Record<string, string>;
+    }>;
+    "wp:featuredmedia"?: Array<{
+      id: number;
+      source_url: string;
+      alt_text?: string;
+      media_details?: {
+        width?: number;
+        height?: number;
+        file?: string;
+        sizes?: Record<string, {
+          file: string;
+          width: number;
+          height: number;
+          source_url: string;
+        }>;
+      };
+    }>;
+  };
+};
+
+export type WPPostDetail = {
+  id: number;
+  title: {
+    rendered: string;
+  };
+  content: {
+    raw?: string;
+    rendered: string;
+  };
+  block_data?: unknown[];
+  has_blocks?: boolean;
+  excerpt: {
+    raw?: string;
+    rendered: string;
+  };
+  date: string;
+  modified?: string;
+  slug: string;
+  author?: number;
+  featured_media?: number;
+  seo_meta?: WPSeoMeta;
+  reading_time?: number;
+  word_count?: number;
+  _embedded?: {
+    author?: Array<{
+      id: number;
+      name: string;
+      url?: string;
+      description?: string;
+      avatar_urls?: Record<string, string>;
+    }>;
+    "wp:featuredmedia"?: Array<{
+      id: number;
+      source_url: string;
+      alt_text?: string;
+      media_details?: {
+        width?: number;
+        height?: number;
+        file?: string;
+        sizes?: Record<string, {
+          file: string;
+          width: number;
+          height: number;
+          source_url: string;
+        }>;
+      };
+    }>;
+  };
+};
+
+export type WPPageOverview = {
+  id: number;
+  date: string;
+  slug: string;
+  status: string;
+  type: "page";
+  link: string;
+  title: {
+    rendered: string;
+  };
+  excerpt: {
+    rendered: string;
+    protected: boolean;
+  };
+  parent: number;
+  menu_order: number;
+  categories: number[];
+  tags: number[];
+  class_list: string[];
+  seo_meta?: WPSeoMeta;
+};
+
+export type WPPageDetail = WPPageOverview & {
+  date_gmt: string;
+  guid: {
+    rendered: string;
+  };
+  modified: string;
+  modified_gmt: string;
+  content: {
+    raw?: string;
+    rendered: string;
+    protected: boolean;
+  };
+  has_blocks?: boolean;
+  block_data?: unknown[];
+  author: number;
+  featured_media: number;
+  comment_status: string;
+  ping_status: string;
+  template: string;
+  meta: {
+    footnotes: string;
+  };
+  seo_meta?: WPSeoMeta;
+  reading_time?: number;
+  word_count?: number;
+};
+
+export type WPCategory = {
+  id: number;
+  count: number;
+  description: string;
+  link: string;
+  name: string;
+  slug: string;
+  taxonomy: "category";
+  parent: number;
+  meta: unknown[];
+  seo_meta?: WPSeoMeta;
+};
+
+export type WPTag = {
+  id: number;
+  count: number;
+  description: string;
+  link: string;
+  name: string;
+  slug: string;
+  taxonomy: "post_tag";
+  meta: unknown[];
+  seo_meta?: WPSeoMeta;
+};
 
 export const WpStatus = z.enum(["draft", "publish"]);
 export type WPStatus = z.infer<typeof WpStatus>;
